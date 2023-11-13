@@ -4,6 +4,7 @@ import { LightningElement } from 'lwc';
 export default class ContactDataTable extends LightningElement {
 
     //manual build of column --comment directly added on GitHub, though it's not a good practice.
+    //hello test
     employeeColumn=[
        {label:'Employee ID', fieldName:'empID'},
        {label:'First Name', fieldName:'empFirstName'},
