@@ -18,6 +18,11 @@ export default class ContactDataTable extends LightningElement {
 
    ]
 
+   /*
+    connectedCallback will fetch data faster than wire in ORDER OF Execution.
+    adding new atribute to the each contcat to suite the requirment of dataTable
+
+   */
    connectedCallback()
    {
       getContact()
@@ -27,7 +32,7 @@ export default class ContactDataTable extends LightningElement {
             contact.street = contact.MailingAddress?.street;
             contact.city = contact.MailingAddress?.city;
             contact.country = contact.MailingAddress?.country;
-            contact.postalCode = contact.MailingAddress?.PostalCode;//Mailing PostalCode
+            contact.postalCode = contact.MailingAddress?.PostalCode;
 
          });
          console.log(Contacts);
