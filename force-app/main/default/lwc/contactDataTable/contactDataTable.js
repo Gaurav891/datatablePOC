@@ -3,8 +3,27 @@ import getContact from '@salesforce/apex/contactApexController.getAllContact'
 
 export default class ContactDataTable extends LightningElement {
    
+   // * Table Data
    employeeData=[];
+
+   //* Define action column as per documentation action column should be array of action with label/Name pairs
+   rowaction =[
+      {
+         label:'view', //value available on UI
+         name :'view'  // value used in backend
+      },
+      {
+         label:'edit',
+         name:'edit',
+      },
+      {
+         label:'delete',
+         name:'delete'
+      }
+   ]
    
+   
+   // * Table columns
    employeeColumn=[
       // Modified column to support the URL
       {
@@ -13,7 +32,7 @@ export default class ContactDataTable extends LightningElement {
          type:'url',
          typeAttributes:{
             label: {
-               fieldName:'Name'
+               fieldName:'Name' //value which we want to show on UI
             },
             target:'_blank',
             tooltip:'View contact'
@@ -59,7 +78,15 @@ export default class ContactDataTable extends LightningElement {
          label:'Pin Code', 
          fieldName:'postalCode'
       },
+      //add another column which contains list of action.
+      {
+         type:'action',
+         typeAttributes:{
+            rowActions :this.rowaction,
+            menuAlignment :'auto'
+         }
 
+      }
    ]
 
    /*
@@ -88,6 +115,32 @@ export default class ContactDataTable extends LightningElement {
       })
       .catch(error => console.log(error))
    }
+   // * Handle rowAction
+   handleRowAction(event)
+   {
+      const actionName = event.detail?.action?.name;   //optional chaining..if the object accessed is null/undefined then expression short circuit evaluate to undefined 
+      console.log(`actionName ${actionName}`);
+      const row =event.detail?.row;
+      console.log(JSON.stringify(row));
+
+      switch(actionName){
+         case 'view':
+            console.log('view action clicked');
+            break;
+         case 'edit':
+            console.log('edit button clicked');
+            break;
+         case 'delete':
+            console.log('delete button clicked');
+            break;
+         default :
+         break 
+
+      }
+
+   }
+
+
 // to learn more about data types in table follow below links
 // https://developer.salesforce.com/docs/component-library/bundle/lightning-datatable/documentation
     /* Modification 
