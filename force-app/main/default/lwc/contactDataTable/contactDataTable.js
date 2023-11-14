@@ -1,4 +1,3 @@
-import Phone from '@salesforce/schema/Account.Phone';
 import { LightningElement } from 'lwc';
 import getContact from '@salesforce/apex/contactApexController.getAllContact'
 
