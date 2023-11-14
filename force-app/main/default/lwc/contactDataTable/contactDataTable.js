@@ -24,6 +24,7 @@ export default class ContactDataTable extends LightningElement {
    */
    connectedCallback()
    {
+      /* Qureying contacts from salesforce org and adding new attributes to suite datatable requirements */
       getContact()
       .then(Contacts => {
          Contacts.forEach(contact => {
