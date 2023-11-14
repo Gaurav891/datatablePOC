@@ -6,14 +6,59 @@ export default class ContactDataTable extends LightningElement {
    employeeData=[];
    
    employeeColumn=[
-      {label:'Name', fieldName:'Name'},
-      {label:'Phone', fieldName:'Phone',type:'phone'},
-      {label:'Email', fieldName:'Email',type:'email'},
-      {label:'Account Name', fieldName:'accountName'},
-      {label:'Street', fieldName:'street'},
-      {label:'City', fieldName:'city'},
-      {label:'Country', fieldName:'country'},
-      {label:'Pin Code', fieldName:'postalCode'},
+      // Modified column to support the URL
+      {
+         label:'Name', 
+         fieldName:'contactUrl',
+         type:'url',
+         typeAttributes:{
+            label: {
+               fieldName:'Name'
+            },
+            target:'_blank',
+            tooltip:'View contact'
+
+         }
+      },
+      {
+         label:'Phone', 
+         fieldName:'Phone',
+         type:'phone'
+      },
+      {
+         label:'Email', 
+         fieldName:'Email',
+         type:'email'
+      },
+      {
+         label:'Account Name', 
+         fieldName:'AccountUrl', //backend value
+         type:'url',
+         typeAttributes:{
+            label:{
+               fieldName:'accountName' //value looks on UI
+            },
+            target:'_blank',
+            tooltip:'View Account'
+
+         }
+      },
+      {
+         label:'Street', 
+         fieldName:'street'
+      },
+      {
+         label:'City', 
+      fieldName:'city'
+      },
+      {
+         label:'Country', 
+         fieldName:'country'
+      },
+      {
+         label:'Pin Code', 
+         fieldName:'postalCode'
+      },
 
    ]
 
@@ -28,6 +73,9 @@ export default class ContactDataTable extends LightningElement {
       getContact()
       .then(Contacts => {
          Contacts.forEach(contact => {
+            //added below 2 attributes to support the Url
+            contact.contactUrl = '/'+contact.Id;
+            contact.AccountUrl= '/'+contact.Account?.Id;
             contact.accountName = contact.Account?.Name;
             contact.street = contact.MailingAddress?.street;
             contact.city = contact.MailingAddress?.city;
