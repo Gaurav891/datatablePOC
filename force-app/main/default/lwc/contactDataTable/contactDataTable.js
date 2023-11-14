@@ -88,8 +88,8 @@ export default class ContactDataTable extends LightningElement {
       })
       .catch(error => console.log(error))
    }
-    
-
+// to learn more about data types in table follow below links
+// https://developer.salesforce.com/docs/component-library/bundle/lightning-datatable/documentation
     /* Modification 
       Instead of static ,Now we will take the data from salesforce Org.
     //manual build of column --comment directly added on GitHub, though it's not a good practice.
