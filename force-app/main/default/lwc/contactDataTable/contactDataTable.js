@@ -1,10 +1,10 @@
-import { LightningElement } from 'lwc';
+import { LightningElement,track } from 'lwc';
 import getContact from '@salesforce/apex/contactApexController.getAllContact'
 
 export default class ContactDataTable extends LightningElement {
    
    // * Table Data
-   employeeData=[];
+    employeeData=[];
 
    //* Define action column as per documentation action column should be array of action with label/Name pairs
    rowaction =[
@@ -132,6 +132,23 @@ export default class ContactDataTable extends LightningElement {
             break;
          case 'delete':
             console.log('delete button clicked');
+            //* logic to temporarily delete data from row
+            const rows = this.employeeData;
+            const rowIndex = rows.indexOf(row);
+            console.log(rowIndex);
+            rows.splice(rowIndex, 1);//delete 1 items of given rowIndex
+   
+            //shallow copy ..share the same reference in the memory 
+            //spread syntax generate new array so re-render on UI takes place.
+            //we may use deepclone as well but it's is not required here 
+            //deep clone will take more memory /more time in execution as compare to shallow clone.
+            this.employeeData = [...rows]; 
+
+            
+           //* deep copy ..attributes share different reference in the memory 
+           // this.employeeData = JSON.parse(JSON.stringify(rows));
+
+
             break;
          default :
          break 
@@ -139,6 +156,14 @@ export default class ContactDataTable extends LightningElement {
       }
 
    }
+
+// this.employeedata =[...row];
+//* shallow copy is a copy whose proprty share the same reference.
+
+
+//* deep copy is a copy whose properties don't share the same reference. 
+    
+
 
 
 // to learn more about data types in table follow below links
