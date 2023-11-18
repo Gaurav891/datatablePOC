@@ -1,3 +1,4 @@
+//* with sharing record level security is enforced.
 public with sharing class contactApexController {
     
     @AuraEnabled

@@ -1,10 +1,16 @@
 import { LightningElement,track } from 'lwc';
 import getContact from '@salesforce/apex/contactApexController.getAllContact'
+import FirstName from '@salesforce/schema/Contact.FirstName';
 
 export default class ContactDataTable extends LightningElement {
    
    // * Table Data
     employeeData=[];
+
+   // * Sorting Attributes 
+   sortedBy ='Name';
+   SortedDirection ='asc';
+   defaultSortDirection ='asc'
 
    //* Define action column as per documentation action column should be array of action with label/Name pairs
    rowaction =[
@@ -27,6 +33,7 @@ export default class ContactDataTable extends LightningElement {
    employeeColumn=[
       // Modified column to support the URL
       {
+         
          label:'Name', 
          fieldName:'contactUrl',
          type:'url',
@@ -37,17 +44,20 @@ export default class ContactDataTable extends LightningElement {
             target:'_blank',
             tooltip:'View contact'
 
-         }
+         },
+         sortable:true
       },
       {
          label:'Phone', 
          fieldName:'Phone',
-         type:'phone'
+         type:'phone',
+         sortable:true
       },
       {
          label:'Email', 
          fieldName:'Email',
-         type:'email'
+         type:'email',
+         sortable:true
       },
       {
          label:'Account Name', 
@@ -60,23 +70,28 @@ export default class ContactDataTable extends LightningElement {
             target:'_blank',
             tooltip:'View Account'
 
-         }
+         },
+         sortable:true
       },
       {
          label:'Street', 
-         fieldName:'street'
+         fieldName:'street',
+         sortable:true
       },
       {
          label:'City', 
-      fieldName:'city'
+      fieldName:'city',
+      sortable:true
       },
       {
          label:'Country', 
-         fieldName:'country'
+         fieldName:'country',
+         sortable:true
       },
       {
          label:'Pin Code', 
-         fieldName:'postalCode'
+         fieldName:'postalCode',
+         sortable:true
       },
       //add another column which contains list of action.
       {
@@ -92,7 +107,6 @@ export default class ContactDataTable extends LightningElement {
    /*
     connectedCallback will fetch data faster than wire in ORDER OF Execution.
     adding new atribute to the each contcat to suite the requirment of dataTable
-
    */
    connectedCallback()
    {
@@ -102,7 +116,8 @@ export default class ContactDataTable extends LightningElement {
          Contacts.forEach(contact => {
             //added below 2 attributes to support the Url
             contact.contactUrl = '/'+contact.Id;
-            contact.AccountUrl= '/'+contact.Account?.Id;
+            //contact.AccountUrl= '/'+contact.Account?.Id;
+            contact.AccountUrl= (contact.Account === undefined ? '':'/'+contact.Account.Id); 
             contact.accountName = contact.Account?.Name;
             contact.street = contact.MailingAddress?.street;
             contact.city = contact.MailingAddress?.city;
@@ -115,7 +130,7 @@ export default class ContactDataTable extends LightningElement {
       })
       .catch(error => console.log(error))
    }
-   // * Handle rowAction
+   // * Handle rowAction function 
    handleRowAction(event)
    {
       const actionName = event.detail?.action?.name;   //optional chaining..if the object accessed is null/undefined then expression short circuit evaluate to undefined 
@@ -137,25 +152,141 @@ export default class ContactDataTable extends LightningElement {
             const rowIndex = rows.indexOf(row);
             console.log(rowIndex);
             rows.splice(rowIndex, 1);//delete 1 items of given rowIndex
-   
             //shallow copy ..share the same reference in the memory 
             //spread syntax generate new array so re-render on UI takes place.
             //we may use deepclone as well but it's is not required here 
             //deep clone will take more memory /more time in execution as compare to shallow clone.
-            this.employeeData = [...rows]; 
-
-            
+            this.employeeData = [...rows]; //we want each item of rows array copied to empdata
            //* deep copy ..attributes share different reference in the memory 
            // this.employeeData = JSON.parse(JSON.stringify(rows));
 
 
             break;
-         default :
+         default : 
          break 
 
       }
 
    }
+
+   // * 
+   sortBy(field, reverse, primer){
+      
+      //* key function return the value of attribute on whch sorting take place.
+      //* each function accept a single contact object return value of specific field
+      //* primer we use to do transform ..all character in upper case 
+      //* primer wil accept the field value perform some logic on that then return . 
+       const key =primer 
+                  ? function(a)
+                  {
+                      return primer(field,a);
+                  }
+                  : 
+                  function(a)
+                  {
+                     
+                     return a[field];
+                  };
+
+      // * return comparable fun
+       return function(a,b)
+       {
+         //a is object 
+         //b is another adjacent record
+
+         //once key called on a and b ...key function return  their particular field value.
+          a = key(a);
+          b = key(b);
+         
+          //based on it return -1, 1 ,0 
+          /*
+             -> valid for asc 
+             > 0 means a should comes after b;
+             < 0 means a should comes before b;
+             = 0 means if order doesn't matter. 
+          */
+
+         //* handle undefined values while sorting.
+         if(a === b)
+             return 0;
+         else if(a === undefined) 
+            return reverse * -1; //undefined will come 1st in asc
+         else if (b === undefined)
+           return reverse * 1; //
+         
+          return reverse * ((a > b) - (b > a));
+       }
+
+
+   }
+   //* helper method for sortby method
+   primer(fieldName,record)
+   {
+      let retrunVal;
+       switch (fieldName){
+         case "contactUrl" : 
+           retrunVal = record['Name'];
+           break;
+         case "AccountUrl" :
+            retrunVal = record['accountName'];
+            break;
+         default:
+            retrunVal = record[fieldName];
+            break;
+
+       }
+       return retrunVal;
+   }
+
+   // * handle onsort function 
+   handleSort(event)
+   {
+      console.log(event.detail);
+      const {fieldName :sortedBy , sortDirection: SortedDirection} = event.detail;
+      const clonedContacts = [...this.employeeData]; //shallow copy ..but 1st level it acts as deep copy.
+      // sort function accept compareFn.
+      console.log(`sortedBy : ${sortedBy} , sortedDirection :${SortedDirection}`);
+      clonedContacts.sort(this.sortBy(sortedBy, SortedDirection === 'asc' ? 1 : -1,this.primer)); //no copy is made here same array got sorted.
+      this.employeeData = clonedContacts; 
+      this.sortedBy = sortedBy;
+      this.SortedDirection = SortedDirection;
+
+      }
+/*
+tracing :
+
+arr1 = [
+contact1 :{name : Gaurav, Email : kr@gmail.com, Phone : 3201111},
+contact2 :{name : Victor, Email : vi@gmail.com, Phone : 9201111},
+contact3 :{name : Fran, Email : Fran@gmail.com, Phone : 9201111}];
+
+arr2 = [...arr1];
+//got direction = asc and fieldName = Name 
+arr2.sort() //sort() accept the compareFn
+
+sortBy(Name ,1)
+{
+   const key =primer ? function(x)
+                       {
+                          return primer(x[Name]) //
+                       } 
+                       :
+                       function(x)
+                       {
+                        return x[Name];
+                       }
+
+}
+
+
+
+
+
+
+*/
+
+
+
 
 // this.employeedata =[...row];
 //* shallow copy is a copy whose proprty share the same reference.
