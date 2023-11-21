@@ -1,6 +1,6 @@
 <template>
     <!--inner datatable will take this height-->
-    <div style="height:240px">
+    <div style="height:340px">
      <lightning-datatable
       key-field="empID"
       columns={employeeColumn}
@@ -10,9 +10,10 @@
       sorted-by={sortedBy}
       sorted-direction={SortedDirection}
       default-sort-direction={defaultSortDirection}
+      onheaderaction={handleHeaderAction}
       hide-checkbox-column
       show-row-number-column
      ></lightning-datatable>
     </div>
-
+    
 </template>

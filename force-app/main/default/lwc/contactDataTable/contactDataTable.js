@@ -6,6 +6,8 @@ export default class ContactDataTable extends LightningElement {
    
    // * Table Data
     employeeData=[];
+   
+    originalEmployeeData =[];
 
    // * Sorting Attributes 
    sortedBy ='Name';
@@ -45,19 +47,46 @@ export default class ContactDataTable extends LightningElement {
             tooltip:'View contact'
 
          },
-         sortable:true
+         sortable:true,
+         wrapText: true,
+         hideDefaultActions:true
       },
       {
          label:'Phone', 
          fieldName:'Phone',
          type:'phone',
-         sortable:true
+         sortable:true,
+         wrapText: true,
+         hideDefaultActions:true
       },
       {
          label:'Email', 
          fieldName:'Email',
          type:'email',
-         sortable:true
+         sortable:true,
+         wrapText: true,
+         hideDefaultActions:true
+      },
+      //column having custom action 
+      {
+         label:'Lead Source', 
+         fieldName:'LeadSource',
+         actions:[
+          { label : 'All' ,checked: true, name: 'all' },  
+          { label : 'Web' ,checked: false, name: 'Web' },  
+          { label : 'Phone Inquiry' ,checked: false, name: 'Phone_Inquiry' },  
+          { label : 'Partner Referral' ,checked: false, name: 'Partner_Referral' },  
+          { label : 'External Referral' ,checked: false, name: 'External_Referral' },
+          { label : 'Partner	Partner' ,checked: false, name: 'Partner_Partner' },
+          { label : 'Public Relations' ,checked: false, name: 'Public_Relations' },
+          { label : 'Trade Show' ,checked: false, name: 'Trade_Show' },
+          { label : 'Word of mouth' ,checked: false, name: 'Word_of_mouth' },
+          { label : 'Employee Referral' ,checked: false, name: 'Employee_Referral' },
+          { label : 'Other' ,checked: false, name: 'Other' },
+         ],
+         sortable:true,
+         wrapText: true,
+         hideDefaultActions:true
       },
       {
          label:'Account Name', 
@@ -71,27 +100,37 @@ export default class ContactDataTable extends LightningElement {
             tooltip:'View Account'
 
          },
-         sortable:true
+         sortable:true,
+         wrapText: true,
+         hideDefaultActions:true
       },
       {
          label:'Street', 
          fieldName:'street',
-         sortable:true
+         sortable:true,
+         wrapText: true,
+         hideDefaultActions:true
       },
       {
          label:'City', 
       fieldName:'city',
-      sortable:true
+      sortable:true,
+      wrapText: true,
+      hideDefaultActions:true
       },
       {
          label:'Country', 
          fieldName:'country',
-         sortable:true
+         sortable:true,
+         wrapText: true,
+         hideDefaultActions:true
       },
       {
          label:'Pin Code', 
          fieldName:'postalCode',
-         sortable:true
+         sortable:true,
+         wrapText: true,
+         hideDefaultActions:true
       },
       //add another column which contains list of action.
       {
@@ -127,6 +166,7 @@ export default class ContactDataTable extends LightningElement {
          });
          console.log(Contacts);
           this.employeeData = Contacts;
+          this.originalEmployeeData = Contacts;
       })
       .catch(error => console.log(error))
    }
@@ -252,6 +292,42 @@ export default class ContactDataTable extends LightningElement {
       this.SortedDirection = SortedDirection;
 
       }
+   // * whenever header column action is clicked this function is called 
+   handleHeaderAction(event)
+   {
+       console.log(JSON.stringify(event.detail));
+       //event.detail gives cloumn defination and action which is clicked
+       const {action ,columnDefinition} = event.detail;
+       // get the cloumn and find the particular cloumn on which action is being performed.
+       // once find the cloumn then get the list of all action associated with that coloumn.
+
+       const column = this.employeeColumn;//all coloumn
+       //get all the action of partilcular column ...looks for Json string to understand below statement.
+       const columnAction = column.find(eachColumn => eachColumn.fieldName ===  columnDefinition.fieldName)?.actions; 
+       // if the column action is find then tick the choosen action.
+       if(columnAction)
+       {
+          columnAction.forEach(currentItem =>{
+            //each item have checked Attribute
+            //action comes from event just match and mark them to true.
+             currentItem.checked = currentItem.name === action.name;
+          })
+          //due to limitation and known issue we need to assign the column with updated action 
+          this.employeeColumn = [...column];
+          if(action.name === 'all')
+             this.employeeData = this.originalEmployeeData;
+            else
+            this.employeeData = this.originalEmployeeData.filter(eachContcat => eachContcat.LeadSource === action.label);
+          
+       }
+
+
+      
+   }
+
+
+
+
 /*
 tracing :
 
