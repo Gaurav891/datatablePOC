@@ -48,7 +48,7 @@ export default class ContactDataTable extends LightningElement {
 
          },
          sortable:true,
-         wrapText: true,
+         initialWidth :80,
          hideDefaultActions:true
       },
       {
@@ -56,7 +56,7 @@ export default class ContactDataTable extends LightningElement {
          fieldName:'Phone',
          type:'phone',
          sortable:true,
-         wrapText: true,
+         initialWidth :80,
          hideDefaultActions:true
       },
       {
@@ -64,7 +64,7 @@ export default class ContactDataTable extends LightningElement {
          fieldName:'Email',
          type:'email',
          sortable:true,
-         wrapText: true,
+         initialWidth :100,
          hideDefaultActions:true
       },
       //column having custom action 
@@ -85,7 +85,7 @@ export default class ContactDataTable extends LightningElement {
           { label : 'Other' ,checked: false, name: 'Other' },
          ],
          sortable:true,
-         wrapText: true,
+         initialWidth :70,
          hideDefaultActions:true
       },
       {
@@ -101,35 +101,36 @@ export default class ContactDataTable extends LightningElement {
 
          },
          sortable:true,
-         wrapText: true,
+         initialWidth :150,
          hideDefaultActions:true
       },
       {
          label:'Street', 
          fieldName:'street',
          sortable:true,
-         wrapText: true,
+         initialWidth :220,
+         wrapText:true,
          hideDefaultActions:true
       },
       {
          label:'City', 
       fieldName:'city',
       sortable:true,
-      wrapText: true,
+     
       hideDefaultActions:true
       },
       {
          label:'Country', 
          fieldName:'country',
          sortable:true,
-         wrapText: true,
+         
          hideDefaultActions:true
       },
       {
          label:'Pin Code', 
          fieldName:'postalCode',
          sortable:true,
-         wrapText: true,
+         
          hideDefaultActions:true
       },
       //add another column which contains list of action.
