@@ -2,7 +2,7 @@
     <!--inner datatable will take this height-->
     <div style="height:340px">
      <lightning-datatable
-      key-field="empID"
+      key-field="Id"
       columns={employeeColumn}
       data={employeeData}
       onrowaction={handleRowAction}
@@ -13,14 +13,24 @@
       onheaderaction={handleHeaderAction}
       min-column-width="120"
       resize-column-disabled
-      hide-checkbox-column
+      selected-rows={selectedRows}
+      onrowselection={handleRowSelection}
       show-row-number-column
      ></lightning-datatable>
     </div>
     <!--
+    //* work with selected row
+    ldt accept the list of ID to mark the row as selected.
+    our case 
+    selected-rows={selectedRows}
+    selectedRows is the list of ID once  it's change ldt re-render and mark the rows as selected.
+
+
+    -->
+    <!--
      min-column-width="120" //by default it's 50 
      max-column-width="1000"
      it can be handled from js column defination as well 
-     by using initial coloum width attribute
+     by using initialWidth attribute
     -->
 </template>

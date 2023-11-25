@@ -14,6 +14,9 @@ export default class ContactDataTable extends LightningElement {
    SortedDirection ='asc';
    defaultSortDirection ='asc'
 
+   //* selected row 
+   selectedRows=[];
+
    //* Define action column as per documentation action column should be array of action with label/Name pairs
    rowaction =[
       {
@@ -168,6 +171,10 @@ export default class ContactDataTable extends LightningElement {
          console.log(Contacts);
           this.employeeData = Contacts;
           this.originalEmployeeData = Contacts;
+          //mark the 1st three row as selected by default.
+          //we need to pass list of ID to ldt to mark those selected.
+          this.selectedRows= Contacts.slice(0,3).map(contact => contact.Id);
+          console.log('--default selected row--',JSON.stringify(this.selectedRows));
       })
       .catch(error => console.log(error))
    }
@@ -324,6 +331,15 @@ export default class ContactDataTable extends LightningElement {
 
 
       
+   }
+   //* Exceuted when the row is selected/dis-selected in LDT
+   handleRowSelection(event)
+   {
+      console.log(JSON.stringify(event.detail));
+      this.selectedRows = event.detail.selectedRows.map(contact => contact.Id);
+      console.log(JSON.stringify(this.selectedRows));
+      //write other logic to play with the recordID ..
+      //open Modal /delete row /update rows
    }
 
 
