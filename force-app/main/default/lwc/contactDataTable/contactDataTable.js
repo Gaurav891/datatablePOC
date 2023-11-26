@@ -438,7 +438,17 @@ sortBy(Name ,1)
 
 */
 
+/*
+Filter dataTable ..with infinite loading enabled. complete story
 
+change in Apex controller.
+
+Allow methods to accept the filter parameter. 
+
+
+
+
+*/ 
 
 
 // this.employeedata =[...row];
