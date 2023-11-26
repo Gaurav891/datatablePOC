@@ -16,8 +16,25 @@
       selected-rows={selectedRows}
       onrowselection={handleRowSelection}
       show-row-number-column
+      enable-infinite-loading
+      onloadmore={loadMoreContacts}
      ></lightning-datatable>
     </div>
+    <!--
+     work with infinite loading LDT.
+
+     enableInfiniteLoading ..boolean to tell infinite loading is enabled.
+     onloadmore...is called when user scroll down to data table 
+
+     isLoding 
+     enableInfiniteLoading we are using programatically 
+     if enableInfiniteLoading ==false then even if we scroll down then also 
+     onloadmore not called
+
+    -->
+
+
+
     <!--
     //* work with selected row
     ldt accept the list of ID to mark the row as selected.

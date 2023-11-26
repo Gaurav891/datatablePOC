@@ -1,6 +1,6 @@
 import { LightningElement,track } from 'lwc';
 import getContact from '@salesforce/apex/contactApexController.getAllContact'
-import FirstName from '@salesforce/schema/Contact.FirstName';
+import getContactCount from '@salesforce/apex/contactApexController.getContactCount'
 
 export default class ContactDataTable extends LightningElement {
    
@@ -16,6 +16,11 @@ export default class ContactDataTable extends LightningElement {
 
    //* selected row 
    selectedRows=[];
+
+   //* infinite loading parameter
+   recordsLimit = 10;
+   totalNumberofRecord =0;
+
 
    //* Define action column as per documentation action column should be array of action with label/Name pairs
    rowaction =[
@@ -153,30 +158,8 @@ export default class ContactDataTable extends LightningElement {
    */
    connectedCallback()
    {
-      /* Qureying contacts from salesforce org and adding new attributes to suite datatable requirements */
-      getContact()
-      .then(Contacts => {
-         Contacts.forEach(contact => {
-            //added below 2 attributes to support the Url
-            contact.contactUrl = '/'+contact.Id;
-            //contact.AccountUrl= '/'+contact.Account?.Id;
-            contact.AccountUrl= (contact.Account === undefined ? '':'/'+contact.Account.Id); 
-            contact.accountName = contact.Account?.Name;
-            contact.street = contact.MailingAddress?.street;
-            contact.city = contact.MailingAddress?.city;
-            contact.country = contact.MailingAddress?.country;
-            contact.postalCode = contact.MailingAddress?.PostalCode;
-
-         });
-         console.log(Contacts);
-          this.employeeData = Contacts;
-          this.originalEmployeeData = Contacts;
-          //mark the 1st three row as selected by default.
-          //we need to pass list of ID to ldt to mark those selected.
-          this.selectedRows= Contacts.slice(0,3).map(contact => contact.Id);
-          console.log('--default selected row--',JSON.stringify(this.selectedRows));
-      })
-      .catch(error => console.log(error))
+      this.updateTotalRecordCount(); //update the total record count variable.
+      this.QueryContact();
    }
    // * Handle rowAction function 
    handleRowAction(event)
@@ -342,6 +325,83 @@ export default class ContactDataTable extends LightningElement {
       //open Modal /delete row /update rows
    }
 
+   //* called when user scroll all the way down to ldt.
+   loadMoreContacts(event)
+   {
+     console.log('Load more contacts');
+     console.log(`dataTable length ${this.employeeData.length}----totalRecordCount ${this.totalNumberofRecord}`);
+     if(this.employeeData.length < this.totalNumberofRecord)
+     {
+      event.target.isLoading = true;
+      this.QueryContact(event.target);
+     }
+     else
+     {
+      event.target.enableInfiniteLoading = false;
+      console.log('Table loaded ');
+     }
+     
+
+   }
+  //* update total number of recordCount
+  updateTotalRecordCount()
+  {
+   getContactCount()
+   .then(data => this.totalNumberofRecord =data)
+   .catch(error => console.log(error))
+  }
+
+   //* generic function to query contacts based limit and offSet
+   QueryContact(currentTarget)
+   {
+
+      console.log('---Query contacts--');
+      console.log(`--Qlimit ${this.recordsLimit} ---QueryOffset ${this.employeeData.length}`);
+      /* Qureying contacts from salesforce org and adding new attributes to suite datatable requirements */
+      getContact({
+         QLimit: this.recordsLimit, //query limit is 10
+         queryOffSet: this.employeeData.length //offset is number of record loaded so due to offset sf skip those records.
+         //initial this.employeeData = 0 ..sf won't skip query 10 record.  next time length is 10 
+         //so offset become 10 and so sf skip 1st 10 and then Query.
+      })
+      .then(Contacts => {
+         Contacts.forEach(contact => {
+            //added below 2 attributes to support the Url
+            contact.contactUrl = '/'+contact.Id;
+            //contact.AccountUrl= '/'+contact.Account?.Id;
+            contact.AccountUrl= (contact.Account === undefined ? '':'/'+contact.Account.Id); 
+            contact.accountName = contact.Account?.Name;
+            contact.street = contact.MailingAddress?.street;
+            contact.city = contact.MailingAddress?.city;
+            contact.country = contact.MailingAddress?.country;
+            contact.postalCode = contact.MailingAddress?.PostalCode;
+
+         });
+         console.log(Contacts);
+          const selectRows = this.employeeData === 0;//return true if 1st time loading is happening in ldt.
+          //concat is used to add new set of array to the alredy existing one
+          //each time Contacts is 10 ...each 10 will be concatenated to the existing array.
+          this.employeeData = this.employeeData.concat(Contacts);
+          this.originalEmployeeData = this.originalEmployeeData.concat(Contacts);
+          //mark the 1st three row as selected by default.
+          //we need to pass list of ID to ldt to mark those selected.
+          if(selectRows)
+          {
+            this.selectedRows= Contacts.slice(0,3).map(contact => contact.Id);
+          }
+          
+          //console.log('--default selected row--',JSON.stringify(this.selectedRows));
+      })
+      .catch(error => console.log(error))
+      .then(()=>{
+         if(currentTarget)
+         {
+            currentTarget.isLoading =false;
+         }
+      })
+   }
+
+
 
 
 
@@ -393,46 +453,6 @@ sortBy(Name ,1)
 // to learn more about data types in table follow below links
 // https://developer.salesforce.com/docs/component-library/bundle/lightning-datatable/documentation
     /* Modification 
-      Instead of static ,Now we will take the data from salesforce Org.
-    //manual build of column --comment directly added on GitHub, though it's not a good practice.
-    
-    employeeColumn=[
-       {label:'Employee ID', fieldName:'empID'},
-       {label:'First Name', fieldName:'empFirstName'},
-       {label:'Last Name', fieldName:'empLastName'},
-       {label:'Phone', fieldName:'empPhone',type:'phone'},
-       {label:'Email', fieldName:'empEmail',type:'email'},
-    ]
-    //generate static data
-    employeeData=[
-       { 
-        empID: '1',
-        empFirstName:'Gaurav',
-        empLastName:'Kr',
-        empPhone:'(985) 558-4621',
-        empEmail:'gaurav@gmail.com'
-       },
-       { 
-        empID: '2',
-        empFirstName:'Gaurav',
-        empLastName:'Kr',
-        empPhone:'(985) 558-4621',
-        empEmail:'gaurav@gmail.com'
-       }, 
-       { 
-        empID: '3',
-        empFirstName:'Gaurav',
-        empLastName:'Kr',
-        empPhone:'(985) 558-4621',
-        empEmail:'gaurav@gmail.com'
-       }, 
-       { 
-        empID: '4',
-        empFirstName:'Gaurav',
-        empLastName:'Kr',
-        empPhone:'(985) 558-4621',
-        empEmail:'gaurav@gmail.com'
-       }
-    ]
+   
 */
 }
