@@ -1,6 +1,6 @@
 <template>
     <!--inner datatable will take this height-->
-    <div style="height:340px">
+    <div style="height:500px">
      <lightning-datatable
       key-field="Id"
       columns={employeeColumn}
@@ -16,7 +16,8 @@
       selected-rows={selectedRows}
       onrowselection={handleRowSelection}
       show-row-number-column
-      enable-infinite-loading
+      is-loading={isLoading}
+      enable-infinite-loading={enableinfiniteLoading}
       onloadmore={loadMoreContacts}
      ></lightning-datatable>
     </div>
