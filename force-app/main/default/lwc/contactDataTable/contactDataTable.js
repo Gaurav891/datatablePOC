@@ -1,13 +1,18 @@
 import { LightningElement,track } from 'lwc';
 import getContact from '@salesforce/apex/contactApexController.getAllContact'
 import getContactCount from '@salesforce/apex/contactApexController.getContactCount'
+import Name from '@salesforce/schema/Account.Name';
 
+const constant ={
+ PUBLIC_RELATION : 'Public Relations'
+
+}
 export default class ContactDataTable extends LightningElement {
    
    // * Table Data
-    employeeData=[];
+   employeeData=[];
    
-    originalEmployeeData =[];
+   originalEmployeeData =[];
 
    // * Sorting Attributes 
    sortedBy ='Name';
@@ -28,6 +33,7 @@ export default class ContactDataTable extends LightningElement {
 
 
    //* Define action column as per documentation action column should be array of action with label/Name pairs
+   /*  Comment row level static acction ...will build dynamic action based on row data.
    rowaction =[
       {
          label:'view', //value available on UI
@@ -42,7 +48,42 @@ export default class ContactDataTable extends LightningElement {
          name:'delete'
       }
    ]
-   
+   */
+
+   //* Used to create a dynamic row level action.
+   //accept row : each row data sent and based on row we gonna decide weather to choose which 
+   //action is required 
+   //callBack ...it's a way to handle async call in js ...once we have action ready we gonna return thr same.
+   //
+   dynamicAction(row,callBack)
+   {
+      console.log('----///----row check ',row);
+       const rowaction =[
+         {
+            label:'view', //value available on UI
+            name :'view' , // value used in backend
+            iconName: 'action:preview'
+         },
+         {
+            label:'edit',
+            name:'edit',
+            iconName:'action:edit'
+            
+         }
+      ];
+       if(row['LeadSource'] != constant.PUBLIC_RELATION)
+      {
+         rowaction.push({
+            label:'delete',
+            name:'delete',
+            iconName:'action:delete'
+         })
+      }
+      // we can also make apex callout determine the actions 
+      setTimeout(()=>{
+         callBack(rowaction);
+      },1000)
+   }
    
    // * Table columns
    employeeColumn=[
@@ -150,7 +191,7 @@ export default class ContactDataTable extends LightningElement {
       {
          type:'action',
          typeAttributes:{
-            rowActions :this.rowaction,
+            rowActions :this.dynamicAction, //build dynamic acton for each row 
             menuAlignment :'auto'
          }
 
@@ -364,7 +405,7 @@ export default class ContactDataTable extends LightningElement {
   //* in both the cases i wanna apply new list of contacts to be on UI.
   updateTotalRecordCount()
   {
-   const that = this;
+   const that = this; //to maintain the same context 
    getContactCount({
       recordFilter :this.recordFilter
    })
@@ -384,7 +425,7 @@ export default class ContactDataTable extends LightningElement {
       //and after sometime this may chage)
       // to memorise the this ..assign this to some variable and use that only
       const that = this;// use that to maintain consistency in callback 
-      console.log('---Query contacts--');
+      console.log('---Querying contacts--');
       console.log(`--Qlimit ${this.recordsLimit} ---QueryOffset ${this.employeeData.length}--recordfilter 
        ${ JSON.stringify(this.recordFilter)}`);
       /* Qureying contacts from salesforce org and adding new attributes to suite datatable requirements */
@@ -481,6 +522,11 @@ Filter dataTable ..with infinite loading enabled. complete story
 change in Apex controller.
 
 Allow methods to accept the filter parameter. 
+filter parameter contains the where condition....
+
+once filter change ...
+calculate total numumber of record which that particular filter and 
+load initial records only.
 
 //
 
