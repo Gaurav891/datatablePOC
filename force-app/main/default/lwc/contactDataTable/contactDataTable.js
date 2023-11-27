@@ -53,7 +53,7 @@ export default class ContactDataTable extends LightningElement {
    //* Used to create a dynamic row level action.
    //accept row : each row data sent and based on row we gonna decide weather to choose which 
    //action is required 
-   //callBack ...it's a way to handle async call in js ...once we have action ready we gonna return thr same.
+   // callBack ...it's a way to handle async call in js ...once we have action ready we gonna return thr same.
    //
    dynamicAction(row,callBack)
    {
@@ -87,6 +87,7 @@ export default class ContactDataTable extends LightningElement {
    
    // * Table columns
    employeeColumn=[
+   
       // Modified column to support the URL
       {
          
