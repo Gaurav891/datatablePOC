@@ -1,4 +1,6 @@
 <template>
+    <lightning-button label="trigger Inline Edit" onclick={triggerInlineEdit}></lightning-button>
+    <br/>
     <!--inner datatable will take this height-->
     <div style="height:500px">
      <lightning-datatable
@@ -19,6 +21,10 @@
       is-loading={isLoading}
       enable-infinite-loading={enableinfiniteLoading}
       onloadmore={loadMoreContacts}
+      draft-values={draftValues}
+      oncancel={handleCancel}
+      oncellchange={handleCellChange}
+      onsave={handleSave}
      ></lightning-datatable>
     </div>
     <!--
@@ -31,6 +37,13 @@
      enableInfiniteLoading we are using programatically 
      if enableInfiniteLoading ==false then even if we scroll down then also 
      onloadmore not called
+
+     //inline edit 
+     draftValues contains the collection made during the inline edit/
+
+     structure : 
+     during id: 18 digit ...other all field related to that ID.
+     
 
      
 
