@@ -3,7 +3,8 @@
     <br/>
     <!--inner datatable will take this height-->
     <div style="height:500px">
-     <lightning-datatable
+    <!--Replace the tag with the custom component name -->
+     <c-libs-datatable
       key-field="Id"
       columns={employeeColumn}
       data={employeeData}
@@ -25,7 +26,7 @@
       oncancel={handleCancel}
       oncellchange={handleCellChange}
       onsave={handleSave}
-     ></lightning-datatable>
+     ></c-libs-datatable>
     </div>
     <!--
      work with infinite loading LDT.

@@ -2,6 +2,7 @@ import { LightningElement,track } from 'lwc';
 import getContact from '@salesforce/apex/contactApexController.getAllContact'
 import getContactCount from '@salesforce/apex/contactApexController.getContactCount'
 import Name from '@salesforce/schema/Account.Name';
+import LeadSource from '@salesforce/schema/Contact.LeadSource';
 
 const constant ={
  PUBLIC_RELATION : 'Public Relations'
@@ -146,9 +147,32 @@ export default class ContactDataTable extends LightningElement {
           { label : 'Other' ,checked: false, name: 'Other' },
          ],
          sortable:true,
-         initialWidth :70,
+         wrapText:true,
+         initialWidth :100,
          hideDefaultActions:true,
-         editable: true
+         editable: true,
+         type :'pickList' ,// refer custom component libs-datatable there picklist is defined.
+         typeAttributes:{
+             name :'LeadSource',
+             placeholder : 'Lead Source',
+             readonly : true,
+             options :[
+               { label : 'All' , value: 'All' },  
+               { label : 'Web' , value: 'Web' },  
+               { label : 'Phone Inquiry' , value: 'Phone Inquiry' },  
+               { label : 'Partner Referral' , value: 'Partner Referral' },  
+               { label : 'External Referral' , value: 'External Referral' },
+               { label : 'Partner	Partner' , value: 'Partner Partner' },
+               { label : 'Public Relations' , value: 'Public Relations' },
+               { label : 'Trade Show' , value: 'Trade Show' },
+               { label : 'Word of mouth' , value: 'Word of mouth' },
+               { label : 'Employee Referral' , value: 'Employee Referral' },
+               { label : 'Other', value: 'Other' }
+             ],
+             recordID:{
+               fieldName:'Id'  // use the id value of contact record 
+             }
+         }
       },
       {
          label:'Account Name', 
@@ -639,6 +663,30 @@ same also happen in normal Lightning-input field.
 // to learn more about data types in table follow below links
 // https://developer.salesforce.com/docs/component-library/bundle/lightning-datatable/documentation
     /* Modification 
+
+
+    Details steps to create custom custom dataType in lightning dataTable.
+
+    Step-1 : create a new LWC component with someName extends the LightningDatatable instead of LightningElement
+
+    Step-2 : Define custom types in the new component(can be more than one as well)
+             like below 
+            static customTypes = {
+               customPictureType(Any Relatable NameWe can give): { //this name refered
+                         template: customPicture, // how it looks on cell of ldt 
+                         standardCellLayout: true,
+                        typeAttributes: ['pictureUrl']
+                  }
+                  //other we can add here
+
+    Step-3 : replace the tag <lightning-datatable> from original component to step-1 component Name here (c-some-name)
+
+    step-4 : column on which we want to apply ...custon cell looks ..we define column type --step2 custom type name
+
+    step-5 : Important :
+             suppose we need to pass some attributes 
+
+    
    
 */
 }
