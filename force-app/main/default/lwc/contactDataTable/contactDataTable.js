@@ -155,14 +155,14 @@ export default class ContactDataTable extends LightningElement {
          typeAttributes:{
              name :'LeadSource',
              placeholder : 'Lead Source',
-             readonly : true,
+             readonly :true,
              options :[
-               { label : 'All' , value: 'All' },  
+              
                { label : 'Web' , value: 'Web' },  
                { label : 'Phone Inquiry' , value: 'Phone Inquiry' },  
                { label : 'Partner Referral' , value: 'Partner Referral' },  
                { label : 'External Referral' , value: 'External Referral' },
-               { label : 'Partner	Partner' , value: 'Partner Partner' },
+               { label : 'Partner Partner' , value: 'Partner Partner' },
                { label : 'Public Relations' , value: 'Public Relations' },
                { label : 'Trade Show' , value: 'Trade Show' },
                { label : 'Word of mouth' , value: 'Word of mouth' },
@@ -172,6 +172,14 @@ export default class ContactDataTable extends LightningElement {
              recordID:{
                fieldName:'Id'  // use the id value of contact record 
              }
+         },
+         //to all cell of leadsource column if editCellCss is applied the it will effect the UI
+         //edit cell value should popolated from JS code.
+         // on each record of dt we need to add editCellCss propety via code and provide there some value
+         cellAttributes:{
+            class:{
+               fieldName:'editCellCss'
+            }
          }
       },
       {
@@ -520,6 +528,8 @@ export default class ContactDataTable extends LightningElement {
 handleCancel(event)
 {
   console.log(`cancel ${JSON.stringify(event.detail)}`);
+  this.draftValues =[];
+  this.removeCellattributes();
 }
 
 //* called when single or multiple cellUpdate takes place 
@@ -534,9 +544,37 @@ handleCellChange(event)
      * Brand new rows being editing from UI
        ---> Simply concat the brand new draftValue to existing collection
    */
-
+  
    let draftValue = this.draftValues; //assign the whole draftValues to local
    const currentActionDraftValues = event.detail.draftValues; //it will gives array of changes made in current action
+  // we need to apply customCell on each contact property 
+  const employeeData = this.employeeData; 
+
+   // code to apply cellAtttributes class in the cell
+   for(let currentActionDraftValue of currentActionDraftValues)
+   {
+      
+       //check weather the leadSource is updating or any other field
+       if(currentActionDraftValue.hasOwnProperty('LeadSource'))
+       {
+         
+         //serach for contact on which we need to apply custom cellAttributes like editCellCss
+          const contactIndex = employeeData.findIndex(eachEmployeeData => eachEmployeeData.Id === currentActionDraftValue.Id );
+          if(contactIndex > -1) //means value which is being edited is avaialble in the current Action
+          {
+         
+             //Now apply the customProperety to contact record after doing necessary check
+             if(!employeeData[contactIndex].hasOwnProperty('editCellCss')) //means if already Not applied 
+             {
+               
+               //add new property ans their respected value.
+               employeeData[contactIndex].editCellCss = 'slds-cell-edit slds-is-edited';
+             }
+          }
+       }
+   }
+  
+  
    //Now, we need to check weather currentAction chages record alredy available in draftValue or not
    draftValue = draftValue.map(eachdraftValue => {
    let currentActionIndex = currentActionDraftValues.findIndex(currentActionDraftValue => currentActionDraftValue.Id === eachdraftValue.Id)
@@ -573,13 +611,19 @@ handleSave(event)
 {
    console.log(`save  ${JSON.stringify(event.detail)}`);
    this.draftValues =[];
+   this.removeCellattributes();
 }
 
 //* this function will enable inline edit from seperate event which occur outsite ldt
 triggerInlineEdit(event)
 {
-  const ldt = this.template.querySelector('lightning-datatable');
+  const ldt = this.template.querySelector('c-libs-datatable');
   ldt.openInlineEdit();
+}
+removeCellattributes()
+{
+   const data = this.employeeData;
+   data.forEach(eachContact => delete eachContact.editCellCss)
 }
 
 /*

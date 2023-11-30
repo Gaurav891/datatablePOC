@@ -1,10 +1,48 @@
 <template>
-    <lightning-combobox
-    name={name}
-    label={label}
-    value={value}
-    placeholder={placeholder}
-    options={options}
-    onchange={handlechange}>
-    </lightning-combobox>
+    <!-- if: true and if:false 
+    -> attributes written in both the tag evaluated twice for true as well as for false
+
+    lwc:if and lwc else :
+    ->attributes written is evaluated once.
+
+    Hence re-renderig is fast
+    
+    
+    -->
+    <!-- create 2 mode 
+      A. edit mode and 
+      B. readOnlyMode-->
+   
+<template lwc:if={readOnly}>
+  <lightning-layout horizontal-align="spread">
+  <lightning-layout-item class="slds-var-p-around_x-small">
+   {value}
+  </lightning-layout-item>
+  <lightning-layout-item class="slds-var-p-around_x-small">
+    <lightning-button-icon    
+    icon-name="utility:edit"
+    alternative-text="Edit"
+    title="edit"
+    size="small"
+    variant="bare"
+    onclick={makePicklistEditable}
+    >
+    <label>Edit</label>
+</lightning-button-icon>
+  </lightning-layout-item>
+
+
+  </lightning-layout>
+</template>
+<template lwc:else > 
+  <lightning-combobox
+  name={name}
+  label={label}
+  value={value}
+  placeholder={placeholder}
+  options={options}
+  onchange={handlechange}
+  onblur={makePicklistReadOnly}>
+  </lightning-combobox>
+</template>
 </template>

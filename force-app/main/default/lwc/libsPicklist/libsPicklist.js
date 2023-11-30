@@ -8,15 +8,21 @@ export default class LibsPicklist extends LightningElement {
    @api placeholder;
    @api value ;
    @api options;
-   @api readonly; 
+   @api readOnly = false; 
    @api recordID; //to store the Id of each record in dt. 
 
+   renderedCallback()
+   {
+      console.log('data check',this.readOnly);
+
+      console.log('--',this.placeholder);
+   }
 
    //* called when picklist value of combox changed
    handlechange(event)
    {
       //fire the event and handle the event in the parent component and update the draft val
-     //using special st. so that we could re-use the same code oncellchange in parent component
+     //using special st. of event response detail so that we could re-use the same code oncellchange in parent component
       const detail ={
           draftValues :[
             {
@@ -36,6 +42,22 @@ export default class LibsPicklist extends LightningElement {
            
       }));
 
+   }
+   makePicklistEditable()
+   {
+      console.log('combo clicked');
+      this.readOnly =false;
+      const that = this;
+      //re-rendering edit mode combobox would take some time so using set-timeout 
+      setTimeout(()=>{
+         const cmb = that.template.querySelector('lightning-combobox');
+         cmb.focus();
+      },100)
+      
+   }
+   makePicklistReadOnly()
+   {
+      this.readOnly =true; //Re-render UI in readonly mode 
    }
 
    
