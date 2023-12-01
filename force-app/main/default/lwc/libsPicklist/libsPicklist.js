@@ -6,18 +6,79 @@ export default class LibsPicklist extends LightningElement {
    @api name;
    @api label;
    @api placeholder;
-   @api value ;
+   //@api value ;
    @api options;
    @api readOnly = false; 
    @api recordID; //to store the Id of each record in dt. 
 
-   renderedCallback()
-   {
-      console.log('data check',this.readOnly);
+   //attributes declared to match the standard UI when record is being to edit
+   @api selected;
+   @api numberOfRecordSelected =0;
+   @api variant = 'standard';
 
-      console.log('--',this.placeholder);
-   }
 
+   updateSelectedRecords =false;
+   picklistValues ='';
+   oldValue;
+
+   //for combobox  instead of value as property 
+   //we use getter and setter. 
+
+   //whereever/whenever template refer value attribute  in code 
+   //below get value method called
+    @api 
+    get value()
+    {
+      return this.picklistValues;
+    }
+    // setter method for value
+    //whenever on UI value attributes changed then below fun called
+    set value(newVal)
+    {
+       this.picklistValues = newVal;
+       this.oldValue=newVal;
+    }
+     //getter to indentify  if we need to show checbox 
+    get showcheckBoxToupdateSelectedRecords()
+    {
+      //show checkbox only when on UI more than one is selected
+      return this.selected && (this.numberOfRecordSelected >1);
+    }
+
+     //getter to provide label to checkbocx on popover
+     get checkboxLabel()
+     {
+      return 'Update '+this.numberOfRecordSelected+' selected item ';
+     }
+
+     //refer slds classes documentation to learn more
+     //section _body style
+     get section_BodyPopOver()
+     {
+       let style = 'slds-popover__body'
+       if(!this.showcheckBoxToupdateSelectedRecords)
+       {
+         style +='zeroPadding';
+       }
+          return style; 
+     }
+
+     //section style 
+     get section_popOver()
+     {
+      let style = 'slds-popover slds-popover_prompt slds-popover_prompt_bottom-right ';//slds-popover_small
+      if(this.showcheckBoxToupdateSelectedRecords)
+      {
+         style += 'bottomPopover';
+      }
+      else 
+      {
+         style += 'inlinePopover';
+      }
+      return style;
+     }
+
+    
    //* called when picklist value of combox changed
    handlechange(event)
    {

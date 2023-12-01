@@ -1,0 +1,21 @@
+.zeroPadding{
+    padding: 0;
+}
+.inlinePopover{
+    bottom: 0;
+    top: 0;
+    left: 0;
+    width: max-content;
+}
+/*  each cell consider that as parent element(1) ..inside that we show pop-over element(2)
+ vertical distance from element(1) to element(2) is called top
+ 
+ left is also same horizontal distance between element(1) to element(2).. 
+ 
+ */
+.bottomPopover{
+    bottom: auto;
+    top: 0rem;
+    left: 1rem;
+    width: max-content;
+}

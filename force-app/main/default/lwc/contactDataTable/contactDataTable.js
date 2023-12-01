@@ -181,6 +181,8 @@ export default class ContactDataTable extends LightningElement {
                fieldName:'editCellCss'
             }
          }
+         //re-cap : apply the class to the my leadsource column and the value of the class we will get from
+         // property/field of current record's editCellCss attributes.
       },
       {
          label:'Account Name', 

@@ -1,48 +1,85 @@
 <template>
-    <!-- if: true and if:false 
-    -> attributes written in both the tag evaluated twice for true as well as for false
-
-    lwc:if and lwc else :
-    ->attributes written is evaluated once.
-
-    Hence re-renderig is fast
-    
-    
-    -->
-    <!-- create 2 mode 
-      A. edit mode and 
-      B. readOnlyMode-->
-   
-<template lwc:if={readOnly}>
-  <lightning-layout horizontal-align="spread">
-  <lightning-layout-item class="slds-var-p-around_x-small">
-   {value}
-  </lightning-layout-item>
-  <lightning-layout-item class="slds-var-p-around_x-small">
-    <lightning-button-icon    
-    icon-name="utility:edit"
-    alternative-text="Edit"
-    title="edit"
-    size="small"
-    variant="bare"
-    onclick={makePicklistEditable}
-    >
-    <label>Edit</label>
-</lightning-button-icon>
-  </lightning-layout-item>
-
-
-  </lightning-layout>
-</template>
-<template lwc:else > 
-  <lightning-combobox
-  name={name}
-  label={label}
-  value={value}
-  placeholder={placeholder}
-  options={options}
-  onchange={handlechange}
-  onblur={makePicklistReadOnly}>
-  </lightning-combobox>
-</template>
+  <!-- if: true and if:false 
+     -> attributes written in both the tag evaluated twice for true as well as for false
+     lwc:if and lwc else :
+     ->attributes written is evaluated once.
+     Hence re-renderig is fast
+     -->
+  <!-- create 2 mode 
+     A. edit mode and 
+     B. readOnlyMode-->
+  <template lwc:if={readOnly}>
+     <lightning-layout horizontal-align="spread">
+        <lightning-layout-item class="slds-var-p-around_x-small">
+           {value}
+        </lightning-layout-item>
+        <lightning-layout-item class="slds-var-p-around_x-small">
+           <lightning-button-icon    
+              icon-name="utility:edit"
+              alternative-text="Edit"
+              title="edit"
+              size="small"
+              variant="bare"
+              onclick={makePicklistEditable}
+              >
+              <label>Edit</label>
+           </lightning-button-icon>
+        </lightning-layout-item>
+     </lightning-layout>
+  </template>
+  <template lwc:else >
+     <!--on edit, develop form to get input form user --> 
+     <form onsubmit={handleSubmit}>
+        <div>
+           <section class={section_popOver} aria-describedby="libs-picklist-dialog" role="dialog">
+              <div class={section_BodyPopOver} id="libs-picklist-dialog">
+                 <!-- combobox-->
+                 <lightning-combobox
+                    name={name}
+                    label={label}
+                    value={value}
+                    placeholder={placeholder}
+                    options={options}
+                    onchange={handlechange}
+                    onblur={makePicklistReadOnly}>
+                 </lightning-combobox>
+                 <!--conditional checkbox if selected record being edited-->
+                 <template lwc:if={showcheckBoxToupdateSelectedRecords}>
+                    <lightning-input 
+                       type="checkbox" 
+                       label={checkboxLabel}
+                       name="UpdateMultipleRecords"
+                       checked={updateSelectedRecords}
+                       onclick={handleUpdateSelectedRecords}
+                       class="slds-var-p-top-small">
+                    </lightning-input>
+                 </template>
+              </div>
+              <!-- conditional cancel and save button -->
+              <template lwc:if={showcheckBoxToupdateSelectedRecords}>
+                 <!--
+                  section footer should be available based on condition
+                  and footer contains cancel/apply button.
+                  footer class is slds-popover_footer refer doc for class
+                 -->
+                 <footer class="slds-popover_footer"> <!-- popover -->
+                    <lightning-layout horizontal-align="end">
+                       <lightning-layout-item class="slds-var-p-around_xxx-small">
+                          <lightning-button name="cancelPopoverButton" label="Cancel" onclick={handleCancel}></lightning-button>
+                       </lightning-layout-item>
+                       <lightning-layout-item class="slds-var-p-around_xxx-small" >
+                        <!--This button works as submit button of form when checkbox is available on UI-->
+                          <lightning-button type="submit" name="savePopOverButton" label="Apply" onclick={handleSave} variant="brand"></lightning-button>
+                       </lightning-layout-item>
+                    </lightning-layout>
+                 </footer>
+              </template>
+              <!--hidden submit button -->
+              <template lwc:else>
+                 <button  type="submit" aria-hidden="true" tabindex="-1" value="save" class="slds-hide picklistFormSubmitbutton" ></button>
+              </template>
+           </section>
+        </div>
+     </form>
+  </template>
 </template>
