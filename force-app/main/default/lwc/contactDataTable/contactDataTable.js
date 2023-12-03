@@ -171,7 +171,13 @@ export default class ContactDataTable extends LightningElement {
              ],
              recordID:{
                fieldName:'Id'  // use the id value of contact record 
-             }
+             },
+             selected :{
+               fieldName :'selected' //selected attributes needs to define in contact array 
+             },
+             numberOfRecordSelected:{
+               fieldName:'numberOfRecordSelected'
+             } 
          },
          //to all cell of leadsource column if editCellCss is applied the it will effect the UI
          //edit cell value should popolated from JS code.
@@ -424,6 +430,7 @@ export default class ContactDataTable extends LightningElement {
       console.log(JSON.stringify(event.detail));
       this.selectedRows = event.detail.selectedRows.map(contact => contact.Id);
       console.log(JSON.stringify(this.selectedRows));
+      this.updateSelectedRecordWithAttributes();
       //write other logic to play with the recordID ..
       //open Modal /delete row /update rows
    }
@@ -517,7 +524,7 @@ export default class ContactDataTable extends LightningElement {
           {
             that.selectedRows= Contacts.slice(0,3).map(contact => contact.Id);
           }
-          
+          this.updateSelectedRecordWithAttributes();
           console.log('--default selected row--',JSON.stringify(this.selectedRows));
       })
       .catch(error => console.log(error))
@@ -548,10 +555,28 @@ handleCellChange(event)
    */
   
    let draftValue = this.draftValues; //assign the whole draftValues to local
-   const currentActionDraftValues = event.detail.draftValues; //it will gives array of changes made in current action
-  // we need to apply customCell on each contact property 
+   let currentActionDraftValues = event.detail.draftValues; //it will gives array of changes made in current action
+   console.log('---',currentActionDraftValues);
+   console.log(`cell change 1${JSON.stringify(event.detail.draftValues)}`);
+   // we need to apply customCell on each contact property 
   const employeeData = this.employeeData; 
-
+   if(event.detail.updateSelectedRecords)
+   {
+      //if picklist component says update all selected row then
+      const dt = this.template.querySelector('c-libs-datatable');
+      const selectedRows = dt.getSelectedRows();
+     
+      currentActionDraftValues = selectedRows.map(selectedContact =>{
+         //console.log('id..in map check ',selectedContact);
+         let piclistObj = structuredClone(currentActionDraftValues[0]);
+         //console.log('--111---',piclistObj);
+        
+         piclistObj.Id = selectedContact.Id;
+         //lead source will be same for all 
+         return piclistObj;  // new array constructed with the return value // {} -represent callback function
+      })
+   }
+   console.log('-=>',currentActionDraftValues);
    // code to apply cellAtttributes class in the cell
    for(let currentActionDraftValue of currentActionDraftValues)
    {
@@ -626,6 +651,26 @@ removeCellattributes()
 {
    const data = this.employeeData;
    data.forEach(eachContact => delete eachContact.editCellCss)
+}
+
+// below function add 2 new attributes on each eachofcontact record
+updateSelectedRecordWithAttributes()
+{
+   const numberOfselectedRecord = this.selectedRows.length; //Number of selected record in dt
+   this.employeeData.forEach(eachCondata =>{
+     if(this.selectedRows.find(conID => conID === eachCondata.Id))
+     {
+      eachCondata.selected =true;
+     }
+     else
+     {
+      eachCondata.selected=false;
+     }
+     eachCondata.numberOfRecordSelected= numberOfselectedRecord;
+
+   })
+   this.employeeData =[...this.employeeData];
+
 }
 
 /*

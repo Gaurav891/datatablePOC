@@ -7,7 +7,7 @@ export default class LibsDatatable extends LightningDatatable  {
         pickList: {
           template: picklist, //template which define how the Cell UI looks
           standardCellLayout: false,
-          typeAttributes: ['name','label','placeholder','readonly','options','recordID'] // values of all these attributes is defined from the 
+          typeAttributes: ['name','label','placeholder','readonly','options','recordID','numberOfRecordSelected','selected'] // values of all these attributes is defined from the 
                                                                               //other place where the customTypes Picklist is used
                                                                               //as column defination. 
         }

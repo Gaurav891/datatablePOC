@@ -30,7 +30,9 @@
   <template lwc:else >
      <!--on edit, develop form to get input form user --> 
      <form onsubmit={handleSubmit}>
-        <div>
+      <!--onfocusout developed to track where user is clicking outsite 
+         when the div will losse the focus then below fun called-->
+        <div tabindex="-1" onfocusout={makePicklistReadOnly} data-name="picklistContainer" >
            <section class={section_popOver} aria-describedby="libs-picklist-dialog" role="dialog">
               <div class={section_BodyPopOver} id="libs-picklist-dialog">
                  <!-- combobox-->
@@ -38,10 +40,10 @@
                     name={name}
                     label={label}
                     value={value}
-                    placeholder={placeholder}
+                    placeholder={placeholder}  
                     options={options}
                     onchange={handlechange}
-                    onblur={makePicklistReadOnly}>
+                    >
                  </lightning-combobox>
                  <!--conditional checkbox if selected record being edited-->
                  <template lwc:if={showcheckBoxToupdateSelectedRecords}>
@@ -75,7 +77,16 @@
                  </footer>
               </template>
               <!--hidden submit button -->
+              <!--
+               type = submit// means if the button which define inside the form 
+               clicking that button will submit the form data.
+
+               slds hide class means below button won't visible.
+               aria-hidden : true // can be accessible by accessibilty Api
+               tabinde :-1 ,focus is hidden by keyboard navigation. focus can be reached by code/programaticlly.
+              -->
               <template lwc:else>
+               <!--it won't available on UI, so we access this programatically-->
                  <button  type="submit" aria-hidden="true" tabindex="-1" value="save" class="slds-hide picklistFormSubmitbutton" ></button>
               </template>
            </section>
