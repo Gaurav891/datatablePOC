@@ -33,4 +33,13 @@ public with sharing class contactApexController {
       }
       return query;
     }
+    @AuraEnabled
+    public static void updateContacts(List<Contact> contacts)
+    {
+      try {
+        update contacts;
+      } catch (Exception e) {
+       throw new AuraHandledException(e.getMessage());
+      }
+    }
 }

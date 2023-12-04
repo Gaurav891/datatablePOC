@@ -1,7 +1,10 @@
 import { LightningElement,track } from 'lwc';
 import getContact from '@salesforce/apex/contactApexController.getAllContact'
 import getContactCount from '@salesforce/apex/contactApexController.getContactCount'
+import updateContacts from '@salesforce/apex/contactApexController.updateContacts'
 import Name from '@salesforce/schema/Account.Name';
+import LeadSource from '@salesforce/schema/Contact.LeadSource';
+import MailingState from '@salesforce/schema/Contact.MailingState';
 
 const constant ={
  PUBLIC_RELATION : 'Public Relations'
@@ -31,6 +34,11 @@ export default class ContactDataTable extends LightningElement {
    //* filter based 
    recordFilter ={};
 
+   //* inline edit parameter
+   draftValues=[];
+
+   //* error 
+   errors={};
 
    //* Define action column as per documentation action column should be array of action with label/Name pairs
    /*  Comment row level static acction ...will build dynamic action based on row data.
@@ -53,7 +61,7 @@ export default class ContactDataTable extends LightningElement {
    //* Used to create a dynamic row level action.
    //accept row : each row data sent and based on row we gonna decide weather to choose which 
    //action is required 
-   //callBack ...it's a way to handle async call in js ...once we have action ready we gonna return thr same.
+   // callBack ...it's a way to handle async call in js ...once we have action ready we gonna return thr same.
    //
    dynamicAction(row,callBack)
    {
@@ -87,6 +95,7 @@ export default class ContactDataTable extends LightningElement {
    
    // * Table columns
    employeeColumn=[
+   
       // Modified column to support the URL
       {
          
@@ -103,7 +112,8 @@ export default class ContactDataTable extends LightningElement {
          },
          sortable:true,
          initialWidth :80,
-         hideDefaultActions:true
+         hideDefaultActions:true,
+         editable: true
       },
       {
          label:'Phone', 
@@ -111,7 +121,9 @@ export default class ContactDataTable extends LightningElement {
          type:'phone',
          sortable:true,
          initialWidth :80,
-         hideDefaultActions:true
+         hideDefaultActions:true,
+         editable: true,
+         wrapText:true
       },
       {
          label:'Email', 
@@ -119,7 +131,8 @@ export default class ContactDataTable extends LightningElement {
          type:'email',
          sortable:true,
          initialWidth :100,
-         hideDefaultActions:true
+         hideDefaultActions:true,
+         editable: true
       },
       //column having custom action 
       {
@@ -139,8 +152,48 @@ export default class ContactDataTable extends LightningElement {
           { label : 'Other' ,checked: false, name: 'Other' },
          ],
          sortable:true,
-         initialWidth :70,
-         hideDefaultActions:true
+         wrapText:true,
+         initialWidth :100,
+         hideDefaultActions:true,
+         editable: true,
+         type :'pickList' ,// refer custom component libs-datatable there picklist is defined.
+         typeAttributes:{
+             name :'LeadSource',
+             placeholder : 'Lead Source',
+             readonly :true,
+             options :[
+              
+               { label : 'Web' , value: 'Web' },  
+               { label : 'Phone Inquiry' , value: 'Phone Inquiry' },  
+               { label : 'Partner Referral' , value: 'Partner Referral' },  
+               { label : 'External Referral' , value: 'External Referral' },
+               { label : 'Partner Partner' , value: 'Partner Partner' },
+               { label : 'Public Relations' , value: 'Public Relations' },
+               { label : 'Trade Show' , value: 'Trade Show' },
+               { label : 'Word of mouth' , value: 'Word of mouth' },
+               { label : 'Employee Referral' , value: 'Employee Referral' },
+               { label : 'Other', value: 'Other' }
+             ],
+             recordID:{
+               fieldName:'Id'  // use the id value of contact record 
+             },
+             selected :{
+               fieldName :'selected' //selected attributes needs to define in contact array 
+             },
+             numberOfRecordSelected:{
+               fieldName:'numberOfRecordSelected'
+             } 
+         },
+         //to all cell of leadsource column if editCellCss is applied the it will effect the UI
+         //edit cell value should popolated from JS code.
+         // on each record of dt we need to add editCellCss propety via code and provide there some value
+         cellAttributes:{
+            class:{
+               fieldName:'editCellCss'
+            }
+         }
+         //re-cap : apply the class to the my leadsource column and the value of the class we will get from
+         // property/field of current record's editCellCss attributes.
       },
       {
          label:'Account Name', 
@@ -156,7 +209,8 @@ export default class ContactDataTable extends LightningElement {
          },
          sortable:true,
          initialWidth :150,
-         hideDefaultActions:true
+         hideDefaultActions:true,
+         editable: true
       },
       {
          label:'Street', 
@@ -164,28 +218,32 @@ export default class ContactDataTable extends LightningElement {
          sortable:true,
          initialWidth :220,
          wrapText:true,
-         hideDefaultActions:true
+         hideDefaultActions:true,
+         editable: true
       },
       {
          label:'City', 
       fieldName:'city',
       sortable:true,
      
-      hideDefaultActions:true
+      hideDefaultActions:true,
+      editable: true
       },
       {
          label:'Country', 
          fieldName:'country',
          sortable:true,
          
-         hideDefaultActions:true
+         hideDefaultActions:true,
+         editable: true
       },
       {
          label:'Pin Code', 
          fieldName:'postalCode',
          sortable:true,
          
-         hideDefaultActions:true
+         hideDefaultActions:true,
+         editable: true
       },
       //add another column which contains list of action.
       {
@@ -377,6 +435,7 @@ export default class ContactDataTable extends LightningElement {
       console.log(JSON.stringify(event.detail));
       this.selectedRows = event.detail.selectedRows.map(contact => contact.Id);
       console.log(JSON.stringify(this.selectedRows));
+      this.updateSelectedRecordWithAttributes();
       //write other logic to play with the recordID ..
       //open Modal /delete row /update rows
    }
@@ -470,7 +529,7 @@ export default class ContactDataTable extends LightningElement {
           {
             that.selectedRows= Contacts.slice(0,3).map(contact => contact.Id);
           }
-          
+          this.updateSelectedRecordWithAttributes();
           console.log('--default selected row--',JSON.stringify(this.selectedRows));
       })
       .catch(error => console.log(error))
@@ -478,10 +537,277 @@ export default class ContactDataTable extends LightningElement {
          that.isLoading = false;
       })
    }
+// * called when inline edit is canceled
+// * 
+handleCancel(event)
+{
+  console.log(`cancel ${JSON.stringify(event.detail)}`);
+  this.draftValues =[];
+  this.removeCellattributes();
+}
+
+//* called when single or multiple cellUpdate takes place 
+handleCellChange(event)
+{
+   console.log(`cell change ${JSON.stringify(event.detail)}`);
+   //need to build the draftvalues by own 
+   /*
+    2 possibilities user can perfrom on UI while doing inline edit.
+     * same record update in different set of action (A. phone update of same B. Email update of same c. Other details update of same record)
+       ---> in this we have to to merge the object 
+     * Brand new rows being editing from UI
+       ---> Simply concat the brand new draftValue to existing collection
+   */
+  
+   let draftValue = this.draftValues; //assign the whole draftValues to local
+   let currentActionDraftValues = event.detail.draftValues; //it will gives array of changes made in current action
+   console.log('---',currentActionDraftValues);
+   console.log(`cell change 1${JSON.stringify(event.detail.draftValues)}`);
+   // we need to apply customCell on each contact property 
+  const employeeData = this.employeeData; 
+   if(event.detail.updateSelectedRecords)
+   {
+      //if picklist component says update all selected row then
+      const dt = this.template.querySelector('c-libs-datatable');
+      const selectedRows = dt.getSelectedRows();
+     
+      currentActionDraftValues = selectedRows.map(selectedContact =>{
+         //console.log('id..in map check ',selectedContact);
+         let piclistObj = structuredClone(currentActionDraftValues[0]);
+         //console.log('--111---',piclistObj);
+        
+         piclistObj.Id = selectedContact.Id;
+         //lead source will be same for all 
+         return piclistObj;  // new array constructed with the return value // {} -represent callback function
+      })
+   }
+   console.log('-=>',currentActionDraftValues);
+   // code to apply cellAtttributes class in the cell
+   for(let currentActionDraftValue of currentActionDraftValues)
+   {
+      
+       //check weather the leadSource is updating or any other field
+       if(currentActionDraftValue.hasOwnProperty('LeadSource'))
+       {
+         
+         //serach for contact on which we need to apply custom cellAttributes like editCellCss
+          const contactIndex = employeeData.findIndex(eachEmployeeData => eachEmployeeData.Id === currentActionDraftValue.Id );
+          if(contactIndex > -1) //means value which is being edited is avaialble in the current Action
+          {
+         
+             //Now apply the customProperety to contact record after doing necessary check
+             if(!employeeData[contactIndex].hasOwnProperty('editCellCss')) //means if already Not applied 
+             {
+               
+               //add new property ans their respected value.
+               employeeData[contactIndex].editCellCss = 'slds-cell-edit slds-is-edited';
+             }
+          }
+       }
+   }
+  
+  
+   //Now, we need to check weather currentAction chages record alredy available in draftValue or not
+   draftValue = draftValue.map(eachdraftValue => {
+   let currentActionIndex = currentActionDraftValues.findIndex(currentActionDraftValue => currentActionDraftValue.Id === eachdraftValue.Id)
+   console.log('current found or not',currentActionIndex);
+   if(currentActionIndex > -1) //assume in another action same record is being update can be determined via above statement.
+   {
+      //we need to merge so that if phone in one action ...Email in one updated both are reflected in draft value. 
+      // same key is merged between the both the object ..herein it's Id
+      const newDraftValue = {
+         ...eachdraftValue,
+         ...currentActionDraftValues[currentActionIndex]
+      };
+      console.log('new Draft before return',newDraftValue);
+      currentActionDraftValues.splice(currentActionIndex,1); //after merege  simply remove the item 
+      return newDraftValue;
+   }
+   else{  //simply return the other element if the element is not manupulated in the current action.
+      return eachdraftValue;
+   }
+   
+   });
+   //data check before concat 
+   console.log(`draft val ${draftValue} ---- currentActionDraftValues ${currentActionDraftValues}`);
+   // every time if new record being update then simply add the draftchange 
+   draftValue = draftValue.concat(currentActionDraftValues);
+   //assign to component level 
+   this.draftValues = draftValue;
+   
+   console.log('---final draft Value', JSON.stringify(this.draftValues));
+
+}
+//* called when save button clicked 
+handleSave(event)
+{
+   console.log(`save  ${JSON.stringify(event.detail)}`);
+   if(this.validateData())
+   {
+
+
+      //call to Apex to save the changes to the salesforce
+      //before call, we need to format the argument which we will send to the contacts
+      let draftVal = this.draftValues.map((eachDraft)=>{
+
+      return  {...eachDraft ,...{
+        
+        MailingStreet : eachDraft.street,
+        MailingCountry : eachDraft.country,
+        MailingCity:eachDraft.city,
+        MailingState:eachDraft.state,
+        MailingPostalCode:eachDraft.postalCode
+      }}
+      
+
+      })
+      console.log(draftVal);
+
+      updateContacts({
+         contacts:draftVal
+
+      }).then(()=>{
+  //logic to persist which we done the chages in dataTable
+         let contacts = this.employeeData;
+         this.draftValues.forEach(eachDraftCon => {
+  
+     //get the index from contacts where each draftContact is placed
+         let contactIndex = contacts.findIndex(con => con.Id === eachDraftCon.Id);
+     //once Got the Id update the contact in the collection with the draft value so it shows up in the UI
+
+     //merge the contact at index contactIndex with the draft Value
+     contacts[contactIndex] = {...contacts[contactIndex], ...eachDraftCon};
+  
+  })
+  this.employeeData =contacts; //assiging the reference to the same memory location 
+                             
+  this.draftValues =[];
+  this.removeCellattributes();
+      })
+      .catch((error)=> console.log(error))
+       
 
 
 
 
+
+    
+   }
+   //this.draftValues =[];
+   //this.removeCellattributes();
+}
+validateData()
+{
+   //build logic based on req.
+   //we need to only update the errors object attributes 
+   //with the correct format to show the error.
+   //assume usecase hereIn is phone/empty should 
+   //not be emply for any row ..if found show
+   //show error
+   const fieldTocheck=[
+   {
+     key :'Phone',
+     message :'Please enter a valid Phone Number'
+   },
+   {
+      key :'Email',
+      message :'Please enter a valid Email'
+   }
+];
+//build error for each row on user entered bad values
+   let errorRows = this.draftValues.reduce((accumulator ,eachDraftVal)=>{
+    
+      //for each row build error with the below format
+      const eachError ={
+         title:'',
+         messages :[],
+         fieldNames:[]
+      }
+      fieldTocheck.forEach(eachField => {
+      if(eachDraftVal[eachField.key] === '')
+      {
+         eachError.fieldNames.push(eachField.key);
+         eachError.messages.push(eachField.message);
+      }
+      })
+      console.log('----fieldName check--------->>>',eachError.fieldNames);
+      //check the size of eachError.fieldName ..if value is there means error is there
+      if(eachError.fieldNames.length)
+      {
+         eachError.title = 'we have found '+eachError.fieldNames.length +' error';
+         //return the appropriate object st. for reduce to work.
+         //dummy st. for row level error is 
+         /*
+            '18_digit_Id':{
+               title :
+               message :
+               fieldName :
+            }
+
+         */
+         return {...accumulator, [eachDraftVal.Id] : eachError} // 
+
+      }
+      else //No error to current element in reduce so just return previous calculated values
+      {
+         return accumulator;
+      }
+   },{})
+   console.log('eachRows on console',errorRows);
+//build table error if there is any error found in row error 
+if(Object.keys(errorRows).length)
+{
+   let tableError = {
+       title :'Your entries can\'t be saved,Please fix the error in order to save',
+       messages :[]
+   }
+   tableError.messages.push('Please fix the error in the fields ');
+
+
+   this.errors ={
+      // rows attribute populate error on rowLevel
+      rows: errorRows,
+      //table attributes populate error on table level
+      table:tableError,
+ 
+    };
+ 
+    return false;
+}
+   this.errors ={};
+   return true;
+}
+//* this function will enable inline edit from seperate event which occur outsite ldt
+triggerInlineEdit(event)
+{
+  const ldt = this.template.querySelector('c-libs-datatable');
+  ldt.openInlineEdit();
+}
+removeCellattributes()
+{
+   const data = this.employeeData;
+   data.forEach(eachContact => delete eachContact.editCellCss)
+}
+
+// below function add 2 new attributes on each eachofcontact record
+updateSelectedRecordWithAttributes()
+{
+   const numberOfselectedRecord = this.selectedRows.length; //Number of selected record in dt
+   this.employeeData.forEach(eachCondata =>{
+     if(this.selectedRows.find(conID => conID === eachCondata.Id))
+     {
+      eachCondata.selected =true;
+     }
+     else
+     {
+      eachCondata.selected=false;
+     }
+     eachCondata.numberOfRecordSelected= numberOfselectedRecord;
+
+   })
+   this.employeeData =[...this.employeeData];
+
+}
 
 /*
 tracing :
@@ -529,6 +855,22 @@ calculate total numumber of record which that particular filter and
 load initial records only.
 
 //
+LWC is one way binding
+
+assume datatable is child component
+contcatDataTable is parent componet 
+<c/contactDataTable> 
+<ldt draftvalues>  </ldt>
+</c/contactDataTable(alias cdt)
+
+To communicate ...from cdt to ldt(P-child)simply update the property of ldt(draftValues) and it will affect in ldt
+
+To communicate --from ldt to cdc ...we need to take help of event ..here 
+event carry the information of draft value
+
+same also happen in normal Lightning-input field.
+
+
 
 
 
@@ -548,6 +890,30 @@ load initial records only.
 // to learn more about data types in table follow below links
 // https://developer.salesforce.com/docs/component-library/bundle/lightning-datatable/documentation
     /* Modification 
+
+
+    Details steps to create custom custom dataType in lightning dataTable.
+
+    Step-1 : create a new LWC component with someName extends the LightningDatatable instead of LightningElement
+
+    Step-2 : Define custom types in the new component(can be more than one as well)
+             like below 
+            static customTypes = {
+               customPictureType(Any Relatable NameWe can give): { //this name refered
+                         template: customPicture, // how it looks on cell of ldt 
+                         standardCellLayout: true,
+                        typeAttributes: ['pictureUrl']
+                  }
+                  //other we can add here
+
+    Step-3 : replace the tag <lightning-datatable> from original component to step-1 component Name here (c-some-name)
+
+    step-4 : column on which we want to apply ...custon cell looks ..we define column type --step2 custom type name
+
+    step-5 : Important :
+             suppose we need to pass some attributes 
+
+    
    
 */
 }

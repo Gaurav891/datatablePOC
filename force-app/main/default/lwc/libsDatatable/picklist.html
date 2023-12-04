@@ -1,0 +1,16 @@
+<template>
+   
+    <!--code here will be re-rendered in the UI in the table cell -->
+    <!--call picklist component and pass the required attributes-->
+    <c-libs-picklist
+    name={typeAttributes.name}
+    label ={typeAttributes.label}
+    value={value}
+    placeholder={typeAttributes.placeholder}
+    options={typeAttributes.options}
+    read-only={typeAttributes.readonly}
+    record-i-d ={typeAttributes.recordID}
+    selected={typeAttributes.selected}
+    number-of-record-selected={typeAttributes.numberOfRecordSelected}
+    ></c-libs-picklist>
+</template>
