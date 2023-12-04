@@ -1,8 +1,10 @@
 import { LightningElement,track } from 'lwc';
 import getContact from '@salesforce/apex/contactApexController.getAllContact'
 import getContactCount from '@salesforce/apex/contactApexController.getContactCount'
+import updateContacts from '@salesforce/apex/contactApexController.updateContacts'
 import Name from '@salesforce/schema/Account.Name';
 import LeadSource from '@salesforce/schema/Contact.LeadSource';
+import MailingState from '@salesforce/schema/Contact.MailingState';
 
 const constant ={
  PUBLIC_RELATION : 'Public Relations'
@@ -35,6 +37,8 @@ export default class ContactDataTable extends LightningElement {
    //* inline edit parameter
    draftValues=[];
 
+   //* error 
+   errors={};
 
    //* Define action column as per documentation action column should be array of action with label/Name pairs
    /*  Comment row level static acction ...will build dynamic action based on row data.
@@ -118,7 +122,8 @@ export default class ContactDataTable extends LightningElement {
          sortable:true,
          initialWidth :80,
          hideDefaultActions:true,
-         editable: true
+         editable: true,
+         wrapText:true
       },
       {
          label:'Email', 
@@ -637,10 +642,141 @@ handleCellChange(event)
 handleSave(event)
 {
    console.log(`save  ${JSON.stringify(event.detail)}`);
-   this.draftValues =[];
-   this.removeCellattributes();
-}
+   if(this.validateData())
+   {
 
+
+      //call to Apex to save the changes to the salesforce
+      //before call, we need to format the argument which we will send to the contacts
+      let draftVal = this.draftValues.map((eachDraft)=>{
+
+      return  {...eachDraft ,...{
+        
+        MailingStreet : eachDraft.street,
+        MailingCountry : eachDraft.country,
+        MailingCity:eachDraft.city,
+        MailingState:eachDraft.state,
+        MailingPostalCode:eachDraft.postalCode
+      }}
+      
+
+      })
+      console.log(draftVal);
+
+      updateContacts({
+         contacts:draftVal
+
+      }).then(()=>{
+  //logic to persist which we done the chages in dataTable
+         let contacts = this.employeeData;
+         this.draftValues.forEach(eachDraftCon => {
+  
+     //get the index from contacts where each draftContact is placed
+         let contactIndex = contacts.findIndex(con => con.Id === eachDraftCon.Id);
+     //once Got the Id update the contact in the collection with the draft value so it shows up in the UI
+
+     //merge the contact at index contactIndex with the draft Value
+     contacts[contactIndex] = {...contacts[contactIndex], ...eachDraftCon};
+  
+  })
+  this.employeeData =contacts; //assiging the reference to the same memory location 
+                             
+  this.draftValues =[];
+  this.removeCellattributes();
+      })
+      .catch((error)=> console.log(error))
+       
+
+
+
+
+
+    
+   }
+   //this.draftValues =[];
+   //this.removeCellattributes();
+}
+validateData()
+{
+   //build logic based on req.
+   //we need to only update the errors object attributes 
+   //with the correct format to show the error.
+   //assume usecase hereIn is phone/empty should 
+   //not be emply for any row ..if found show
+   //show error
+   const fieldTocheck=[
+   {
+     key :'Phone',
+     message :'Please enter a valid Phone Number'
+   },
+   {
+      key :'Email',
+      message :'Please enter a valid Email'
+   }
+];
+//build error for each row on user entered bad values
+   let errorRows = this.draftValues.reduce((accumulator ,eachDraftVal)=>{
+    
+      //for each row build error with the below format
+      const eachError ={
+         title:'',
+         messages :[],
+         fieldNames:[]
+      }
+      fieldTocheck.forEach(eachField => {
+      if(eachDraftVal[eachField.key] === '')
+      {
+         eachError.fieldNames.push(eachField.key);
+         eachError.messages.push(eachField.message);
+      }
+      })
+      console.log('----fieldName check--------->>>',eachError.fieldNames);
+      //check the size of eachError.fieldName ..if value is there means error is there
+      if(eachError.fieldNames.length)
+      {
+         eachError.title = 'we have found '+eachError.fieldNames.length +' error';
+         //return the appropriate object st. for reduce to work.
+         //dummy st. for row level error is 
+         /*
+            '18_digit_Id':{
+               title :
+               message :
+               fieldName :
+            }
+
+         */
+         return {...accumulator, [eachDraftVal.Id] : eachError} // 
+
+      }
+      else //No error to current element in reduce so just return previous calculated values
+      {
+         return accumulator;
+      }
+   },{})
+   console.log('eachRows on console',errorRows);
+//build table error if there is any error found in row error 
+if(Object.keys(errorRows).length)
+{
+   let tableError = {
+       title :'Your entries can\'t be saved,Please fix the error in order to save',
+       messages :[]
+   }
+   tableError.messages.push('Please fix the error in the fields ');
+
+
+   this.errors ={
+      // rows attribute populate error on rowLevel
+      rows: errorRows,
+      //table attributes populate error on table level
+      table:tableError,
+ 
+    };
+ 
+    return false;
+}
+   this.errors ={};
+   return true;
+}
 //* this function will enable inline edit from seperate event which occur outsite ldt
 triggerInlineEdit(event)
 {
